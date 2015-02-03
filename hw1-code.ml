@@ -87,23 +87,30 @@ let rec gcd (x,y) = match (x,y) with
   | (x,0) -> abs(x)
   | (x,y) -> if abs(x) < abs(y) then gcd (x,(y mod x)) else gcd(y,(x mod y));;
 
+let lcm (x,y) =  abs(x*y) / gcd(x,y)
 
+let simplify (r) = {num = r.num/gcd(r.num, r.den); den = r.den/gcd(r.num, r.den)};;
 
-let simplify (r) = match (r) with
-  r -> {num = r.num/gcd(r.num, r.den); den = r.den/gcd(r.num, r.den)};;
+let addR (r1,r2) = simplify({num = r1.num * (lcm(r1.den,r2.den)/r1.den) +  r2.num * (lcm(r1.den,r2.den)/r2.den); den = lcm(r1.den, r2.den)});;
 
-let addR (r1,r2) = 
-  failwith "Not implemented"
-
-let multR (r1,r2) = 
-  failwith "Not implemented"
+let multR (r1,r2) = simplify({num = r1.num * r2.num; den = r1.den * r2.den});;
 
 type number = I of int
             | R of rat
             | F of float
 
-let add (n1,n2) = 
-  failwith "Not implemented"
+let add (n1,n2) = match (n1,n2) with
+(I n1, I n2) -> I (n1+n2)
+| (R n1, R n2) -> R (addR(n1, n2))
+| (F n1, F n2) -> F (n1 +. n2)
+| (I n1, R n2) -> R (addR({num = n1; den =1}, n2))
+| (R n1, I n2) -> R (addR({num = n2; den =1}, n1))
+| (I n1, F n2) -> F (float(n1) +. n2)
+| (F n1, I n2) -> F (float(n2) +. n1)
+| (R n1, F n2) -> F (n2 +. float(n1.num)/.float(n1.den))
+| (F n1, R n2) -> F (n1 +. float(n2.num)/.float(n2.den));;
+
+
 
 
 
