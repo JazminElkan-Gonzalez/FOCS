@@ -133,11 +133,24 @@ let sample2 = Or(Not(Variable "a"),And(Variable "b",Constant(True)))
 
 let sample3 = And(Variable "a", Not(Variable "a"))
 
-let vars (bexpr) = 
-  failwith "Not implemented"
+let rec vars (bexpr) = match (bexpr) with 
+  (And(expr1,expr2)) -> setUnion(vars(expr1),vars(expr2)) 
+   | (Or(expr1,expr2)) -> setUnion(vars(expr1),vars(expr2)) 
+   | (Not expr1) -> vars(expr1)
+   | (Constant const) -> [] 
+   | (Variable s) -> [s];;
 
-let subst (bexpr,var,sub) = 
-  failwith "Not implemented"
+let rec subst (bexpr,str,bexpr2) = match (bexpr,str,bexpr2) with
+   (And (x,y),str,bexpr2) -> And (subst(x,str,bexpr2), subst(y, str,bexpr2))
+   | (Or (x,y),str,bexpr2) -> Or (subst(x,str,bexpr2), subst(y, str,bexpr2))
+   | (Not x,str,bexpr2) -> Not (subst(x,str,bexpr2))
+   | (Constant const, str, bexpr2) -> Constant (const)
+   | (Variable s, str, bexpr2) -> if s=str then bexpr2 else Variable (s);;
 
-let eval (bexpr) = 
-  failwith "Not implemented"
+
+let rec eval (bexpr) = match (bexpr) with
+  (Variable s) -> None 
+  | (Constant const) -> Some const
+  | Not x -> if eval(x) = Some True then Some False else if eval(x) = Some False then Some True else None
+  | And (x,y) -> if eval(x) = None || eval(y) = None then None else if eval(x) = Some False || eval(y) = Some False then Some False else Some True
+  | Or (x,y) -> if eval(x) = None || eval(y) = None then None else if eval(x) = Some True || eval(y) = Some True then Some True else Some False;;
