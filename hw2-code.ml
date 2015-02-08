@@ -72,7 +72,6 @@ let transitionError (input) =
  *
  *)
 
-
 let isolatedBs =                (* language: all strings where every b *)
   {alphabet = ['a'; 'b'];       (* is bracketed by a's                 *)   
    states = ["start"; "readb"; "sink"];
@@ -178,8 +177,11 @@ let strings (alphabet, n) =
  *
  *)
 
-let isFinal (dfa,state) = 
-  failwith "isFinal not implemented"
+let rec inList (lookList, value) = match (lookList, value) with
+  (l::look, value) -> if value = l then true else inList(look, value)
+  | ([], value) -> false
+
+let isFinal (dfa,state) = inList(dfa.final, state) 
 
 
 
@@ -193,9 +195,11 @@ let isFinal (dfa,state) =
  *
  *)
 
-let transition (dfa,state,input) = 
-   failwith "transition not implemented"
+let rec gettrans (delta, state, input) = match (delta, state, input) with
+((now,tran,ends)::delta, state, input) -> if state = now && input = tran then ends else gettrans(delta, state, input)
+| ([], state, input) -> "no end state"
 
+let rec transition (dfa,state,input) = gettrans(dfa.delta, state, input)
 
 
 (*
@@ -209,9 +213,9 @@ let transition (dfa,state,input) =
  *
  *)
 
-let extendedTransition (dfa, state, cs) = 
-  failwith "extendedTransition not implemented"
-
+let rec extendedTransition (dfa, state, cs) = match (dfa, state, cs) with
+(dfa, state, c::cs) -> extendedTransition(dfa, transition(dfa, state,c), cs)
+| (dfa, state, []) -> state
 
 (*
  *  accept : 'a dfa * string -> bool
@@ -223,8 +227,8 @@ let extendedTransition (dfa, state, cs) =
  *
  *)
 
-let accept (dfa, input) = 
-  failwith "accept not implemented"
+
+let accept (dfa, input) = isFinal(dfa, extendedTransition(dfa, dfa.start, explode (input)))
 
 
 
@@ -236,20 +240,86 @@ let accept (dfa, input) =
  *
  *)
 
+
+
 let dfaQuestion1a () = 
-  failwith "dfaQuestion1a not implemented"
+  {alphabet= ['a'; 'b'];
+   states= ["start"; "mid1"; "mid2"; "win"; "sink"];
+   start= "start";
+   delta = [("start", 'a', "mid1");
+            ("start", 'b', "mid1");
+            ("mid1", 'a', "mid2");
+            ("mid1", 'b', "mid2");
+            ("mid2",  'a', "win");
+            ("mid2",  'b', "win");
+            ("win",   'a', "sin  k");
+            ("win",   'b', "sink");
+            ("sink",   'a', "sink");
+            ("sink",   'b', "sink")];
+   final = ["win"]}
+
 
 let dfaQuestion1b () = 
-  failwith "dfaQuestion1b not implemented"
+  {alphabet= ['a'; 'b'];
+   states= ["start"; "mid1"; "mid2"; "win"];
+   start= "start";
+   delta = [("start", 'a', "mid1");
+            ("start", 'b', "mid1");
+            ("mid1", 'a', "mid2");
+            ("mid1", 'b', "mid2");
+            ("mid2",  'a', "win");
+            ("mid2",  'b', "win");
+            ("win",   'a', "mid1");
+            ("win",   'b', "mid1")];
+   final = ["win"]}
 
 let dfaQuestion1c () = 
-  failwith "dfaQuestion1c not implemented"
+  {alphabet= ['a'; 'b'];
+   states= ["start"; "mid1"; "mid2"; "win"];
+   start= "start";
+   delta = [("start", 'a', "win");
+            ("start", 'b', "mid1");
+            ("mid1", 'a', "win");
+            ("mid1", 'b', "mid1");
+            ("win",  'a', "mid1");
+            ("win",  'b', "mid2");
+            ("mid2",   'a', "mid1");
+            ("mid2",   'b', "mid2")];
+   final = ["win"]}
 
 let dfaQuestion1d () = 
-  failwith "dfaQuestion1d not implemented"
+  {alphabet= ['a'; 'b'];
+   states= ["start"; "mid1"; "win"; "mid2"];
+   start= "start";
+   delta = [("start", 'a', "win");
+            ("start", 'b', "mid1");
+            ("mid1", 'a', "win");
+            ("win", 'a', "win");
+            ("win", 'b', "mid1");
+            ("mid1", 'b', "mid2");
+            ("mid2",  'a', "mid2");
+            ("mid2",  'b', "mid2")];
+   final = ["win"]}
 
 let dfaQuestion1e () = 
-  failwith "dfaQuestion1e not implemented"
+  {alphabet= ['a'; 'b'];
+   states= ["start"; "mid1"; "win1"; "win2"; "win3"; "mid2"; "win4"];
+   start= "start";
+   delta = [("start", 'a', "mid1");
+            ("start", 'b', "mid1");
+            ("mid1", 'a', "win1");
+            ("mid1", 'b', "win1");
+            ("win1",  'a', "win2");
+            ("win1",  'b', "win2");
+            ("win2", 'b', "win3");
+            ("win2",  'a', "win3");
+            ("win3", 'b', "mid2");
+            ("win3",  'a', "mid2");
+            ("mid2", 'b', "win4");
+            ("mid2",  'a', "win4");
+            ("win4", 'b', "mid1");
+            ("win4",  'a', "mid1")];
+   final = ["win1"; "win2"; "win3"; "win4"]}
 
 
 
