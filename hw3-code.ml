@@ -9,6 +9,7 @@
    Email: Jazmin.gonzalez-Rivero@students.olin.edu
 
    Comments:
+   My answer for 1a (complement) is ugly. :( 
 
  *)
 
@@ -148,18 +149,28 @@ let accept (dfa, input) =
  *
  *)
 
-let rec removeValue(l, value) = match (l, value) with
-([], value) -> []
-| (l::ls, v) -> if l = v then ls else l::removeValue(ls, v)
 
-let rec removeAllValues(l, values) =  match(l,values) with
-(l, []) -> l
-| (ls, v::vs) -> removeAllValues(removeValue(ls,v), vs)
+let complement (dfa) =
+    let rec removeValue(l, value) = match (l, value) with
+      ([], value) -> []
+      | (l::ls, v) -> 
+        if l = v 
+          then ls 
+          else l::removeValue(ls, v) in
+    let rec removeAllValues(l, values) =  match (l,values) with
+      (l, []) -> l
+      | (ls, v::vs) -> removeAllValues(removeValue(ls,v), vs) in
+    {states = dfa.states; alphabet = dfa.alphabet ; start = dfa.start ; delta = dfa.delta; final = removeAllValues(dfa.states, dfa.final)};;
 
-let complement (dfa) =  {states = dfa.states; alphabet = dfa.alphabet ; start = dfa.start ; delta = dfa.delta; final = removeAllValues(dfa.states, dfa.final)}
+let cross (xs, ys) =  
+  let rec matchYs (x, ys) = match (x,ys) with
+    (x, []) -> []
+    | (x, y::ys) -> (x,y)::matchYs(x,ys) in
+  match (xs,ys) with
+    ([], ys) -> []
+    | (x::xs, ys) -> matchYs(x,ys)::cross(xs,ys);;
 
-let cross (xs, ys) = 
-  failwith "cross not implemented"
+
 
 
 let union (dfa1, dfa2) = 
