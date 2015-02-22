@@ -312,12 +312,31 @@ let abaab = {nfa_states = ["q1"; "q2"; "q3"; "q4"; "q5"];
  *)
 
 
-let nfa_hasFinal (nfa,states) = 
-  failwith "nfa_hasFinal not implemented"
+let rec nfa_hasFinal (nfa,states) = 
+  let rec inList (nfaStates, s) = match (nfaStates, s) with
+    ([],s) -> false
+    |(s1::nfaStates, s) -> 
+      if s = s1 
+        then true 
+        else inList(nfaStates,s)
+  in
+  match (nfa,states) with
+    (nfa, []) -> false
+    | (nfa, s::states) -> 
+      if inList(nfa.nfa_final, s) 
+        then true
+        else nfa_hasFinal(nfa,states);;
 
-let nfa_transition (nfa,states,input) = 
-  failwith "nfa_transition not implemented"
-
+let rec nfa_transition (nfa,states,input) = 
+  let rec findOutputs(state, input, delta) = match (state, input, delta)  with
+    (state, input, []) -> []
+    | (state, input, ((s,t,e)::delta)) ->
+      if state = s && input = t 
+        then e 
+        else findOutputs(state, input, delta) in
+  match (nfa,states,input) with 
+    (nfa,[],input) -> []
+    | (nfa,s::states,input) -> findOutputs(s, input, nfa.nfa_delta)@nfa_transition(nfa, states, input);;
 
 
 (*
@@ -325,13 +344,14 @@ let nfa_transition (nfa,states,input) =
  *
  *)
 
+let rec nfa_extendedTransition (nfa, states, cs) = 
+    match (nfa, states, cs) with 
+      (nfa, states, []) -> states
+      | (nfa, [], cs) -> []
+      | (nfa, states, cs1::cs) -> nfa_extendedTransition(nfa, nfa_transition(nfa,states,cs1), cs);;
 
-let nfa_extendedTransition (nfa, states, cs) = 
-  failwith "nfa_extendedTransition not implemented"
 
-
-let nfa_accept (nfa, input) = 
-  failwith "nfa_accept not implemented"
+let nfa_accept (nfa, input) = nfa_hasFinal(nfa,nfa_extendedTransition(nfa, [nfa.nfa_start], explode(input)));;
 
 
 
