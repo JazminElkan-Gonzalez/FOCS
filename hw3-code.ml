@@ -1,4 +1,3 @@
-#use "hw2-code.ml";;
 (* FoCS Spring 2015
 
    Homework 3 code
@@ -130,19 +129,33 @@ let strings (alphabet, n) =
 
 
 
-(*
- * REPLACE THIS WITH YOUR IMPLEMENTATION OF 
- * accept from homework 2 if you want to test
- * your DFA code
- *
- *)
+let isFinal (dfa,state) = 
+  let rec check (finalStates) = 
+    match finalStates with
+      [] -> false
+    | s::ss -> s=state || check(ss)  in
+  check(dfa.final)
+
+
+let transition (dfa,state,input) = 
+  let rec transition' (delta) = 
+    match delta with
+      [] -> transitionError(input)
+    | ((q1,c,q2)::delta') -> if (q1=state && c=input) then
+                               q2
+                             else
+                              transition'(delta')  in
+  transition'(dfa.delta)
+
+
+let rec extendedTransition (dfa, state, cs) = 
+  match cs with
+    [] -> state
+  | c::cs' -> extendedTransition(dfa,transition(dfa,state,c),cs')
 
 
 let accept (dfa, input) = 
-  failwith "Functions 'language' and 'printLanguage' require a working implementation of accept"
-
-
-
+  isFinal(dfa,extendedTransition(dfa, dfa.start, explode(input)))
 
 (*
  * Exercise 2 
@@ -162,19 +175,50 @@ let complement (dfa) =
       | (ls, v::vs) -> removeAllValues(removeValue(ls,v), vs) in
     {states = dfa.states; alphabet = dfa.alphabet ; start = dfa.start ; delta = dfa.delta; final = removeAllValues(dfa.states, dfa.final)};;
 
-let cross (xs, ys) =  
+
+
+let rec cross (xs, ys) =  
   let rec matchYs (x, ys) = match (x,ys) with
     (x, []) -> []
     | (x, y::ys) -> (x,y)::matchYs(x,ys) in
   match (xs,ys) with
     ([], ys) -> []
-    | (x::xs, ys) -> matchYs(x,ys)::cross(xs,ys);;
+    | (x::xs, ys) -> matchYs(x,ys)@cross(xs,ys);;
+
+let rec findFinal (crossList, dfa1, dfa2) = 
+  let rec inList (x, ys) = match (x,ys) with
+    (val1, []) -> false
+    | (val1, s::lit) -> 
+      if val1 = s 
+       then true 
+       else inList(val1,lit)
+  in
+  match (crossList, dfa1,dfa2) with
+    ([], dfa1, dfa2) -> []
+    |((s1,s2)::crossList,  dfa1, dfa2) -> 
+      if inList(s1, dfa1.final) || inList(s2, dfa2.final) 
+        then (s1,s2)::findFinal(crossList,dfa1, dfa2) 
+        else findFinal(crossList, dfa1, dfa2)  ;;
 
 
-
-
-let union (dfa1, dfa2) = 
-  failwith "union not implemented"
+let union (dfa1, dfa2) =
+  let rec findEndpoint(s, t, delta) = match (s,t,delta) with
+    (s,t,[]) -> "fail"
+    | (s, t, (s2,t2,e2)::delta) ->
+      if (s = s2 && t = t2) 
+        then e2
+        else findEndpoint(s,t,delta)
+  in
+  let rec findTrans(crossList, transList) = match (crossList, transList) with
+    ((s1,s2)::crossList, []) -> findTrans(crossList, dfa1.alphabet)
+    | ([],tL) -> []
+    | ((s1,s2)::crossList, t::transList) -> ((s1,s2), t, (findEndpoint(s1, t, dfa1.delta),findEndpoint(s2, t,dfa2.delta)))::findTrans((s1,s2)::crossList, transList) 
+  in
+    {states = cross(dfa1.states, dfa2.states);
+    alphabet = dfa1.alphabet ; 
+    start = (dfa1.start, dfa2.start) ;
+    delta = findTrans(cross(dfa1.states, dfa2.states),dfa1.alphabet);
+    final =  findFinal(cross(dfa1.states, dfa2.states), dfa1, dfa2)};;
 
 
 
