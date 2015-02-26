@@ -8,7 +8,7 @@
    Email: Jazmin.gonzalez-Rivero@students.olin.edu
 
    Comments:
-   My answer for 1a (complement) is ugly. :( 
+   I was very sick with a fever during this homework assignment. I tried to make things as clear as possible. sorry if they arent!!!
 
  *)
 
