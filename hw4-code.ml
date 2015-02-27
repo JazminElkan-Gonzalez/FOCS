@@ -33,13 +33,19 @@ let rec last l =
 let predicate_opt f p = if f p then Some p else None;;
 
 
-let map_opt f p =  match predicate_opt f p  with 
-None -> None
-| Some(p) ->  Some (f p);;
+let map_opt f p = match p with
+  None -> None
+  | (Some p) -> Some (f p);;
 
-let comb_opt f = failwith "not implemented"
+let comb_opt f p1 p2  = match p1 with
+  None -> None
+  | (Some p1) -> match p2 with
+      None -> None 
+      | (Some p2) -> Some( f p1 p2);;
 
-let default v = failwith "not implemented"
+let default v f i = match i with 
+None -> v
+|Some i -> i;;
 
 let compose_opt f g = failwith "not implemented"
 
