@@ -62,13 +62,18 @@ let positive_last = compose_opt last positive;;
  *)
 
 
-let a_least n p xs = failwith "not implemented"
+let at_least n p xs = n <= (List.fold_right 
+(fun x sum_rest -> if p x then 1 + sum_rest else 0 + sum_rest) xs 0);;
 
-let max_list xs = failwith "not implemented"
+let max_list xs = List.fold_right  (fun x rest -> if (List.filter (fun y -> y > x) xs) = [] then Some x else rest) xs None;;
 
-let map_funs fs x = failwith "not implemented"
+let map_funs fs x = List.map (fun f ->  (f x)) fs;;
 
-let map_cross fs xs = failwith "not implemented"
+let dbl x = "double of "^(string_of_int x);;
+
+let neg x = "negative of "^(string_of_int x);;
+
+let map_cross fs xs = List.fold_right (fun x xs-> (map_funs fs x)@xs) xs  [];;
 
 
 
@@ -152,31 +157,53 @@ let print_tree t =
 let rec mapT f t = 
   match t with
     EmptyTree -> EmptyTree
-  | Node (v,l,r) -> Node (f v, mapT f l, mapT f r)
+  | Node (v,l,r) -> Node (f v, mapT f l, mapT f r);;
 
 let rec foldT f t b = 
   match t with
     EmptyTree -> b
-  | Node (v,l,r) -> f v (foldT f l b) (foldT f r b)
-
-let size t = foldT (fun v l r -> 1 + l + r) t 0
-let sum t = foldT (fun v l r -> v + l + r) t 0
+  | Node (v,l,r) -> f v (foldT f l b) (foldT f r b);;
 
 
-let height t = failwith "not implemented"
+let rec size' t = match t with
+  EmptyTree -> 0
+  | Node (_,l,r) -> 1 + (size' l) + (size' r);;
 
-let height' t = failwith "not implemented"
-
-let fringe t = failwith "not implemented"
-
-let fringe' t = failwith "not implemented"
+let rec sum' t = match t with
+  EmptyTree -> 0
+  | Node (v,l,r) -> v + (sum' l) + (sum' r);;
 
 
-let inorder t = failwith "not implemented"
+let size t = foldT (fun v l r -> 1 + l + r) t 0;;
+let sum t = foldT (fun v l r -> v + l + r) t 0;;
 
-let preorder t = failwith "not implemented"
 
-let postorder t = failwith "not implemented"
+let rec height t = match t with
+  EmptyTree -> 0
+  | Node (v,l,r) -> if (height l) > (height r) then 1 + height l else 1 + height r;;
+
+let height' t = foldT (fun v l r -> if l > r then 1 + l else 1 + r) t 0;;
+
+let rec fringe t = match t with
+  EmptyTree -> [] 
+  | Node (v, EmptyTree, EmptyTree) -> [v]
+  | Node (v, l, r) -> (fringe l)@(fringe r);;
+
+let fringe' t = foldT (fun v l r -> 
+                          if (l = [] && r = []) 
+                            then [v] 
+                            else l@r
+                      ) t [];;
+
+
+let preorder t = foldT (fun v l r -> [v]@l@r) t [];;
+
+let inorder t = foldT (fun v l r -> l@[v]@r) t [];;
+
+let postorder t = foldT (fun v l r -> l@r@[v]) t [];;
+
+let rec split (x::xs) ys = if List.length(xs) > List.length(ys) 
+  then split xs x::ys else (xs,ys);;  
 
 
 let make_tree xs = failwith "not implemented"
