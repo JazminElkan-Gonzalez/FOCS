@@ -202,10 +202,24 @@ let inorder t = foldT (fun v l r -> l@[v]@r) t [];;
 
 let postorder t = foldT (fun v l r -> l@r@[v]) t [];;
 
-let rec split (x::xs) ys = if List.length(xs) > List.length(ys) 
-  then split xs x::ys else (xs,ys);;  
+let rec split (xs,ys) = match (xs,ys) with
+([],ys) -> ([],ys)
+| (x::xs,ys) ->  if List.length(x::xs) > List.length(ys) 
+  then split (xs,x::ys) 
+  else (x::xs,ys);;  
 
+let get_first (a,_) = a;;
 
-let make_tree xs = failwith "not implemented"
+let get_second (_,b) = b;;
+
+let rec make_tree xs = match xs with
+[] -> EmptyTree
+| x::xs -> Node (x, 
+                make_tree (
+                  get_second( 
+                    split (xs, []))), 
+                make_tree (
+                  get_first( 
+                    split (xs, []))) );;
 
 
