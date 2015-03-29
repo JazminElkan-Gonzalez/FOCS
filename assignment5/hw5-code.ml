@@ -3,11 +3,11 @@
    Homework 5 code
 
 
-   Name:  Jazmin Gonzalez-Rivero
+   Name:
 
-   Email: Jazmin.gonzalez-Rivero@students.olin.edu
+   Email:
 
-   Comments: I am passing this in a day late because I was very sick and you gave us an extension. 
+   Comments:
 
  *)
 
