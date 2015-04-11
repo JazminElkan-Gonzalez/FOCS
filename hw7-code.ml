@@ -8,8 +8,8 @@
    Email: Jazmin.gonzalez-Rivero@students.olin.edu
 
    Comments: writing out Turning machines makes me sad :(
-
  *)
+ 
 
 
 
@@ -289,12 +289,24 @@ let question2a = { tm_states = ["start"; "acc"; "rej";"q1";"q2";"q3";"q4";"q5";"
 	       tm_tape_alph = ["a";"b";"X";"Y";"_";">"];
 		   tm_leftmost = ">";
 		   tm_blank = "_";
-		   tm_delta = [("start", "a", "start", "a", Right);
+		   tm_delta = [("start", "a", "oops3", "a", Right);
 		  ("start", ">", "start", ">", Right);
 		  ("start", "X", "rej", "X", Right);
 		  ("start", "Y", "rej", "Y", Right);
-		  ("start", "b", "q1", "b", Right);
+		  ("start", "b", "oops2", "b", Right);
 		  ("start", "_", "rewind", "_", Right);
+		  ("oops3", "X", "rej", "X", Right);
+		  ("oops3", "Y", "rej", "Y", Right);
+		  ("oops3", ">", "rej", ">", Right);	  
+		  ("oops3", "a", "oops3", "a", Right);
+		  ("oops3", "b", "q1", "b", Right);	
+		  ("oops3", "_", "rewind", "_", Right);
+		  ("oops2", "X", "rej", "X", Right);
+		  ("oops2", "Y", "rej", "Y", Right);
+		  ("oops2", ">", "rej", ">", Right);	  
+		  ("oops2", "a", "rej", "a", Right);
+		  ("oops2", "b", "oops2", "b", Right);	
+		  ("oops2", "_", "rewind", "_", Right);
 		  ("q1", "X", "rej", "X", Right);
 		  ("q1", "Y", "rej", "Y", Right);
 		  ("q1", ">", "rej", ">", Right);	  
@@ -572,8 +584,22 @@ let binary_sum = { tm_states = [];
 
 
 (* test  *)
-
-run2 question2b "";;
+run2 question2a "";;
+run2 question2a "abab";;
+run2 question2a "bb";;
+run2 question2a "aa";;
+run2 question2a "b";;
+run2 question2a "bbb";;
+run2 question2a "a";;
+run2 question2a "aaa";;
+run2 question2a "aabab";;
+run2 question2a "aabab";;
+run2 question2a "abbab";;
+run2 question2a "ababb";;
+run2 question2a "baba";;
+run2 question2a "ababa";;
+run2 question2a "babab";;
+(* run2 question2b "";;
 run2 question2b "bb";;
 run2 question2b "abbaa";;
 run2 question2b "aba";;
@@ -583,7 +609,7 @@ run2 question2b "aabbaa";;
 run2 question2b "abbbaa";;
 run2 question2b "abbaaaaaaa";;
 run2 question2b "abb";;
-
+ *)
 
 (* run2 binary_sum "";;
 run2 binary_sum "##";;
@@ -609,4 +635,4 @@ run2 binary_sum "111#101#010";;
 run2 binary_sum "000#000#000";;
 run2 binary_sum "001#000#001";; 
 run2 binary_sum "11100#00111#10101";; 
- *)
+*)
