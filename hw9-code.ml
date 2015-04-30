@@ -166,14 +166,14 @@ let rec merge s1 s2 =
   in
   fby (head s1) (fun () -> merge_help (tail s1) s2);;
 
-let rec psums s = 
+let psums s = 
     let rec get_sum lit = List.fold_right (fun x rest -> x + rest) lit 0 
     in
     let rec get_next n s = fby (get_sum  (list n s)) (fun () -> get_next (n+1) s)
     in 
     (get_next 1 s);;
 
-let rec running_max s = 
+let running_max s = 
     let rec get_max lit b = match lit with
     [] -> b
     | l::ls -> if l > b then (get_max ls l) else (get_max ls b)
@@ -187,17 +187,44 @@ let rec running_max s =
  * QUESTION 2
  * 
  *)
+let rec fromf k = fby k (fun () -> fromf (k+.1.))
 
-let rec arctan z = failwith "arctan not implemented"
+let natsf = fromf 0.
 
-let pi () = failwith "pi not implemented"
+let scalef n s = map (fun x -> n*.x) s;;
+
+let rec addf s1 s2 =  fby ((head s1) +. (head s2)) (fun () -> addf (tail s1) (tail s2));;
+
+let psumsf s = 
+    let rec get_sumf lit = List.fold_right (fun x rest -> x +. rest) lit 0.0 
+    in
+    let rec get_nextf n s = fby (get_sumf  (list n s)) (fun () -> get_nextf (n+1) s)
+    in 
+    (get_nextf 1 s);;
+
+let rec arctan z = psumsf (map (fun k -> (-1.)**(k)  *.  ((z**(2.*.k+.1.))/.(2.*.k+.1.))) natsf);;
+
+let pi () = (addf (scalef 16. (arctan(1./.5.))) (scalef (-4.) (arctan(1./.239.))));;
     
-let rec newton f df guess = failwith "newton not implemented"
+let rec newton f df guess = fby (guess) (fun () -> newton f df (guess -. (f guess)/.(df guess))) ;;
 
-let derivative f x = failwith "derivative not implemented"
+let derivative f x = map (fun n -> ((f (x+.(1./.n)) ) -. (f (x) ))/.(1./.n) ) (tail natsf);;
 
-let limit mx eps s = failwith "limit not implemented"
-
+let limit mx eps s = 
+  let absolute v = 
+      if (v < 0.)
+        then (-.v)
+        else v
+  in
+  let rec find_nth n prev s1 = 
+      if (n >= mx) 
+          then None 
+          else 
+              if ((absolute ((head s1) -. prev)) <= eps) 
+              then (Some (head s1))
+              else find_nth (n+1) (head s1) (tail s1) 
+  in
+  find_nth 0 (head s) (tail s);;
 
 
 
