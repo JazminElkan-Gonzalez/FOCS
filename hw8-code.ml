@@ -1,13 +1,13 @@
-(* FoCS Spring 2015
+(*FoCS Spring 2015
 
    Homework 8 code
 
 
-   Name:
+  Name: Jazmin GOonzalez-Rivero
 
-   Email:
+   Email: Jazmin.gonzalez-Rivero@students.olin.edu
 
-   Comments:
+   Comments: was sick...again...so i didnt get to finish question 3 :( So sad
 
  *)
 
@@ -81,7 +81,7 @@ let run m w =
 
     let rec find_match (q,a) delta = 
       match delta with
-        [] -> failwith "No transition defined!"
+        [] -> failwith a
       | ((q_,sym_,p_,rewrite_,dir_)::_) when q=q_ && a=sym_ -> (p_,rewrite_,dir_)
       | _::delta' -> find_match (q,a) delta'  in
 
@@ -634,7 +634,186 @@ let run2 m w =
 
 
 
+type sim_state =
+  NoTag of string
+  | Tag1 of string * string
+  | Tag2 of string * string * string
+  | Tag3 of string * string * string * string
+  | Tag4 of string * string * string * direction * direction
+  | Tag5 of string * string * string * string * direction * direction
+  | Push2 of string * string * direction
+  | Push3 of string * string * direction * direction
 
 let simulate2 tm2 = 
-   (* COMPLETE ME! *)
-   failwith "simulate2 not implemented"
+  let rec find_head alph pos = match alph with
+    [] ->  false
+    | a::alphs -> if pos = "^*"^a then true else (find_head alphs pos)
+  in
+  let rec get_a_value alph pos = match alph with
+    [] ->  failwith "WTF"
+    | a::alphs -> if pos = "^*"^a then "*"^a else ( get_a_value alphs pos)
+  in
+  let rec find_delta state h1 h2 delta = match delta with
+    [] -> failwith "what the actual fuck"
+    | (dq,dh1, dh2, dp, dn1, dn2, dd1, dd2)::deltas -> 
+        if state = dq && h1 = "^*"^dh1 && h2 = "^*"^dh2 
+          then Tag5("p4", dp, "^*"^dn1, "^*"^dn2, dd1, dd2) 
+          else (find_delta state h1 h2 deltas)
+  in
+  let delta (p,a) = match p,a with
+  (* 0. Set up the tape to represent two tapes, and set the state to the start state *)
+   | NoTag("start"), ">" -> (NoTag("q1"), ">", Right)
+   | NoTag ("q1"), "*_" -> (NoTag("q2"), "*_", Left) (* End has been found *)
+   | NoTag("q1"), sym -> (NoTag("q1"), sym, Right) (* Keep moving to end *)
+   | NoTag("q2"), "*_" -> (NoTag("q2"), "*_", Left) (* ignore blanks *)
+   | NoTag("q2"), ">" -> (NoTag("q4"), ">", Right) (* If we have replaced everything then we are ready to add in new start *)
+   | NoTag("q2"), sym -> (Tag1("q3", sym), "*_", Right) (* pick up value replace with black *)
+   | Tag1("q3", sym), sym2 ->  (NoTag("q2"), sym, Left) (* Put down the pervious value and look for the next one *) 
+   | NoTag("q4"), "*_" -> (NoTag("q5"), "^*>", Right) (* Add in new start string *)
+   | NoTag("q5"), "*_" -> (NoTag("q6"), "|", Right) (* Add in new mid point string *)
+   | NoTag("q5"), sym -> (NoTag("q5"), sym, Right) (* Skip until you get to the end *)
+   | NoTag("q6"), "*_" -> (NoTag("rewind"), "^*>", Left) (* Add in second start point *)
+   | NoTag("q6"), sym -> (NoTag("q6"),sym, Right) (* Skip until you get to the end *)
+   | NoTag("rewind"), "^*>" -> (NoTag("start_sim"), "^*>", Left) (* reached the start of the tape, sim can begin *) 
+   | NoTag("rewind"), sym -> (NoTag("rewind"), "*"^sym, Left) (* replace all values with sim values *)
+   | NoTag("start_sim"), ">" -> (Tag1("p1", tm2.tm2_start), ">", Right)
+
+(* 1. Say the simulated two-tapes Turing machine is in state q:
+2. if q is accepting, accept
+3. if q is rejecting, reject *)
+   | NoTag("acc"), sym -> (NoTag("acc"), sym, Right)
+   | Tag1("rewind2", "acc"), sym -> (NoTag("acc"), sym, Right)
+   | Tag1("rewind2", "rej"), sym -> (NoTag("rej"), sym, Right)
+   | NoTag("rej"), sym -> (NoTag("rej"), sym, Right)
+
+(*  4. find the symbol s1 under the first tape head*)
+   | Tag1("p1", state), sym -> 
+    if (find_head (">"::tm2.tm2_tape_alph) sym) 
+    then (Tag2("p2", state, sym), sym, Right) 
+    else (Tag1("p1", state), sym, Right)
+
+(* 5. find the symbol s2 under the second tape head *)
+   | Tag2("p2", state, head1), sym -> 
+   if (find_head (tm2.tm2_tape_alph) sym) 
+    then (Tag3("p3", state, head1, sym), sym, Right) 
+    else (Tag2("p2", state, head1), sym, Right)
+
+(* 6. figure out what (q,s1,s2) should transition to: (p,n1,n2,d1,d2) *)
+   | Tag3("p3", state, head1, head2), sym -> ( (find_delta state head1 head2 tm2.tm2_delta), sym, Left) 
+
+(* 7. rewrite the symbol under the second tape head to n2 *)
+   | Tag5("p4", p, n1, n2, d1, d2), sym -> if 
+      (find_head (tm2.tm2_tape_alph) sym) 
+        then (Tag4 ("p5", p, n1, d1, d2), n2, Left) 
+        else (Tag5("p4", p, n1, n2, d1, d2), sym, Left)
+
+(* 8. rewrite the symbol under the first tape head to n1 *)
+   | Tag4("p5", p, n1, d1, d2), sym -> 
+      if (find_head (tm2.tm2_tape_alph) sym) 
+      then (Push3 ("p6", p, d1, d2), n1, Left) 
+      else (Tag4("p5", p, n1, d1, d2), sym, Left)
+
+(* 9. move the first tape head in direction d1 *)
+   | Push3("p6", p, d1, d2), sym -> 
+      if (find_head (tm2.tm2_tape_alph) sym) 
+      then (Push3 ("p7", p, d1,d2), (get_a_value (tm2.tm2_tape_alph)  sym), d1) 
+      else (Push3("p6", p, d1, d2), sym, Right)
+   | Push3("p7", p, d1,d2), "*|" -> (Push3("grabB", p , d1,d2), "*|", Right)
+   | Push3("p7", p, d1,d2), sym -> (Push2("p8", p , d2), "^"^sym, Right)
+
+   | Push3("grabB",p,d1,d2), "*_" -> (Push3("grab2",p,d1,d2), "*_", Left)
+   | Push3("grabB",p,d1,d2), sym -> (Push3("grabB", p , d1,d2), sym, Right)
+
+   | Push3("grab2",p,d1,d2), "*_" -> (Push3("grab2",p,d1,d2), "*_", Left) (* ignore blanks *)
+   | Push3("grab2",p,d1,d2), sym -> (Tag4("grab3",p,sym,d1,d2), "*_", Right) (* pick up value replace with black *)
+
+   | Tag4("grab3",p,"*|",d1,d2), sym2 ->  (Push3("p6",p,d1,d2), "*|", Left) 
+   | Tag4("grab3",p,sym,d1,d2), sym2 ->  (Push3("grab2",p,d1,d2), sym, Left) (* Put down the pervious value and look for the next one *) 
+
+(* 10. move the second tape head in direction d2 *)
+   | Push2("p8", p, d2), sym -> 
+      if (find_head (tm2.tm2_tape_alph) sym) 
+      then (Tag1 ("p9", p), (get_a_value  (tm2.tm2_tape_alph)  sym), d2) 
+      else (Push2("p8", p, d2), sym, Right)
+   | Tag1("p9", p), sym -> (Tag1("rewind2", p), "^"^sym, Right)
+
+(*11. go step 1. *)
+   | Tag1("rewind2", p), ">" -> (Tag1("p1", p), ">", Right)
+   | Tag1("rewind2", p), sym -> (Tag1("rewind2", p), sym, Left)
+   | _, sym -> (NoTag("rej"), sym, Right)
+  in
+  let rec q3 alphabet =  match alphabet with
+    [] -> []
+    | a::alphs -> (Tag1("q3", a))::(q3 alphs)
+  in
+  let rec tags t1val t2val t3val t4val t5val p2val p3val delt = 
+    let run_t1 t1val s = (List.map (fun t1 -> Tag1(t1,s)) t1val) 
+    in
+    let run_t2 t2val s h1 = (List.map (fun t2 -> Tag2(t2,s,"^*"^h1)) t2val ) 
+    in
+    let run_t3 t3val s h1 h2 = (List.map (fun t3 -> Tag3(t3,s,"^*"^h1, "^*"^h2)) t3val ) 
+    in
+    let run_t4 t4val s h1 d1 d2 = (List.map (fun t4 -> Tag4(t4,s,"^*"^h1,d1,d2)) t4val) 
+    in
+    let run_t5 t5val s h1 h2 d1 d2 = (List.map (fun t5 -> Tag5(t5,s,"^*"^h1,"^*"^h2,d1,d2)) t5val) 
+    in
+    let run_p2 p2val s d1 = (List.map (fun p2 -> Push2(p2,s,d1)) p2val) 
+    in
+    let run_p3 p3val s d1 d2 = (List.map (fun p3 -> Push3(p3,s,d1,d2)) p3val) 
+    in
+  match delt with
+    [] -> []
+  | (q,h1, h2, p, n1, n2, d1, d2)::deltas -> (run_t1 t1val q)
+                                            @(run_t2 t2val q h1)
+                                            @(run_t2 t2val p n1)
+                                            @(run_t3 t3val q h1 h2)
+                                            @(run_t3 t3val p n1 n2)
+                                            @(run_t4 t4val q h1 d1 d2 )
+                                            @(run_t4 t4val p n1 d1 d2 )
+                                            @(run_t5 t5val q h1 h2 d1 d2)
+                                            @(run_t5 t5val p n1 n2 d1 d2)
+                                            @(run_p2 p2val q d1)
+                                            @(run_p2 p2val p d1)
+                                            @(run_p3 p3val q d1 d2)
+                                            @(run_p3 p3val p d1 d2)
+                                            @(tags t1val t2val t3val t4val t5val p2val p3val deltas )
+  in
+let rec grab3 delta alphs = 
+    let grabD2 a delta = (List.map (fun  (q,h1, h2, p, n1, n2, d1, d2) ->  Tag4("grab3",q,a,d1,d2)) delta)
+  in
+  match alphs with
+  [] -> []
+  | a::alp -> (grabD2 a delta)@(grab3 delta alp)
+in
+let rec make_alph alphs = match alphs with
+[] -> [">"; "|"; "*|"]
+| a::alphs -> [a; "^*"^a; "*"^a]@(make_alph alphs) in
+let states =
+ [ NoTag("start");NoTag("q6");NoTag("q1"); NoTag("q2"); NoTag("q4"); NoTag("q5"); NoTag("rewind"); NoTag("start_sim")]@(q3 tm2.tm2_tape_alph)@(tags ["p1"; "p9"; "rewind2"] ["p2"] ["p3"] ["p5"] ["p4"] ["p8"] ["p7";"p6";"grab2";"grabB"] tm2.tm2_delta)@(grab3 tm2.tm2_delta (make_alph tm2.tm2_tape_alph) )
+in
+let string_rep dir = match dir with
+Stay -> "Stay"
+| Left -> "Left"
+| Right -> "Right"
+in
+let string_of st =
+  match st with
+    | NoTag(s) -> s
+    | Tag1(s,s1) -> s^"|"^s1
+    | Tag2(s,s1,a1)-> s^"|"^s1^"|"^a1
+    | Tag3(s,s1,a1,a2)-> s^"|"^s1^"|"^a1^"|"^a2
+    | Tag4(s,s1,a1,d1,d2)-> s^"|"^s1^"|"^a1^"|"^(string_rep d1)^"|"^(string_rep d2)
+    | Tag5(s,s1,a1,a2,d1,d2)-> s^"|"^s1^"|"^a1^"|"^a2^"|"^(string_rep d1)^"|"^(string_rep d2)
+    | Push2(s,s1,d1)-> s^"|"^s1^"|"^(string_rep d1)
+    | Push3(s,s1,d1,d2)-> s^"|"^s1^"|"^(string_rep d1)^"|"^(string_rep d2) in
+transform string_of
+  { tm_states = states;
+    tm_input_alph = tm2.tm2_input_alph;
+    tm_tape_alph = (make_alph tm2.tm2_tape_alph);
+    tm_leftmost = ">";
+    tm_blank = "*_";
+    tm_delta = (make_delta states (make_alph tm2.tm2_tape_alph) delta);
+    tm_start = NoTag("start");
+    tm_accept = NoTag("acc");
+    tm_reject = NoTag("rej") }
+   
